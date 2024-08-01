@@ -1,0 +1,31 @@
+clear v;
+v = velodynelidar('VLP16','Port',2369);
+while true
+ ptcld = read(v);
+ pcden = pcdenoise(ptcld,'Threshold',0.75);
+ ptds = pcdownsample(ptcld,'random',0.75);
+
+ load('drivingLidarPoints.mat');
+
+ maxd= 0.1;
+ refvector = [0,0,1];
+ max_ang_dist = 5;
+ [model1,inlierIndices,outlierIndices] = pcfitplane(ptcld,maxd,refvector,max_ang_dist);
+ plane1 = select(ptcld, inlierIndices);
+
+
+
+ inliers = segmentGroundFromLidarData(ptcld);
+ distThreshold = 0.5;
+ [label,numClusters] = pcsegdist(ptcld,distThreshold);
+
+ numClusters = numClusters+1;
+ label(inliers) = numClusters;
+
+ labelColorIndex = label+1;
+ figure(1)
+ pcshow(ptcld.Location,labelColorIndex)
+ colormap([hsv(numClusters);[0 0 0]])
+ hold on
+ 
+end
